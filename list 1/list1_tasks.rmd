@@ -29,7 +29,7 @@ transform_vectors_from_standard_norm <- function(vectors, mean_matrix, covarianc
 }
 ```
 
-Recall that it holds: $\Sigma^{Y} = A\Sigma^{X}A^T$. In our case it follows $\Sigma^{X} = Id$, so the equation reduces to $\Sigma^{Y} = AA^T$, where $\Sigma^{Y}$ is given. Additionally, a $\Sigma^{Y}$ matrix is positive definite in all the considered cases. This means that Cholesky decomposition can be used to find a lower triangular matrix $A$ that satisfies $\Sigma^{Y} = AA^T$. The elements of matrix $A$ are given by $A_{ii} = \sqrt{\Sigma^{Y}_{ii} - \sum_{j=0}^{i - 1}A_{ij}^2}$ and $A_{ij} = \frac{1}{A_{j, j}}(\Sigma^{Y}_{jj} - \sum_{k=0}^{j -1}\Sigma^{Y}_{ik}\Sigma^{Y}_{jk})$. This is already implemented in R as a $chol$ method. The matrix $B$ can be calculated directly from the expression $B = \mu^{Y} - A\mu^{X}$. In our scenario it holds $\mu^{X} = 0$, so it follows that B = \mu^{Y}$.
+Recall that it holds: $\Sigma^{Y} = A\Sigma^{X}A^T$. In our case it also holds $\Sigma^{X} = Id$, so the equation reduces to $\Sigma^{Y} = AA^T$, where $\Sigma^{Y}$ is given. Additionally, a $\Sigma^{Y}$ matrix is positive definite in all the considered cases. This means that Cholesky decomposition can be used to find a lower triangular matrix $A$ that satisfies the equation $\Sigma^{Y} = AA^T$. The elements of the matrix $A$ are given by $A_{ii} = \sqrt{\Sigma^{Y}_{ii} - \sum_{j=0}^{i - 1}A_{ij}^2}$ and $A_{ij} = \frac{1}{A_{j, j}}(\Sigma^{Y}_{jj} - \sum_{k=0}^{j -1}\Sigma^{Y}_{ik}\Sigma^{Y}_{jk})$. This is already implemented in R as a $chol$ method. The matrix $B$ can be calculated directly from the expression $B = \mu^{Y} - A\mu^{X}$. In our scenario it holds $\mu^{X} = 0$, so it follows that $B = \mu^{Y}$.
 
 ```{r}
 mean_matrix <- matrix(c(4.0, 2.0), nrow=2)
@@ -44,7 +44,7 @@ transformed_vectors3 <- transform_vectors_from_standard_norm(vectors, mean_matri
 plot_vectors(transformed_vectors3, title="Samples from N((4, 2), (9, 0, 0, 1))")
 ```
 
-From the plot of samples, it can be seen that variables were transformed to the correct distributions. In the first case, a strong positive correlation between $X_1$ and $Y_1$ is visible. On the other hand, the second plot proves the strong negative correlations between $X_2$ and $Y_2$. On the last plot there is definitely more variance on X axis compared to Y axis. Additionally, all plots are centered in a $(4, 2)^T$ point.
+From the plot of samples, it can be seen that variables were transformed to the correct distributions. In the first case, a strong positive correlation between $X_1$ and $Y_1$ is visible. On the other hand, the second plot proves the strong negative correlation between $X_2$ and $Y_2$. On the last plot there is definitely more variance on the $X$ axis compared to the $Y$ axis. Additionally, all plots are centered in the $(4, 2)^T$ point.
 
 
 # Task 3
@@ -80,7 +80,7 @@ analyse_vectors_transform <- function(dimension, samples_count) {
 analyse_vectors_transform(dimension = 100, samples_count = 200)
 ```
 
-From the histogram of the variances of random variables it can be seen that they are concentrated near a value of 1.0. It also follows that a mean of the variances is very close to 1.0 The variance of these estimators is pretty high as only 200 samples were used. The similar phenomenon can be seen on the plot of covariances. The values are close to 0.9, but the variance is high. The mean value is also very close to 0.9.
+From the histogram of variances of random variables it can be seen that they are concentrated near a value of 1.0. It also follows that a mean of the variances is very close to 1.0 The variance of these estimators is pretty high as only 200 samples were used. The similar phenomenon can be seen on the plot of covariances. The values are close to 0.9, but the variance is high. The mean value is also very close to 0.9.
 
 ```{r}
 analyse_vectors_transform(dimension = 100, samples_count = 20000)
