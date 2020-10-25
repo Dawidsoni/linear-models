@@ -1,0 +1,116 @@
+---
+title: "Linear models - Assignment 2"
+author: Dawid Wegner
+date: 25/10/2020
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+options(warn = -1)
+set.seed(1)
+```
+
+# Task 1
+
+```{r}
+copiers_df <- read.table('CH01PR20', col.names = c("service_time", "machines_count"))
+ggplot(copiers_df) +
+  geom_point(aes(x = machines_count, y = service_time), shape = 19, size = 2.2, color="darkblue") +
+  xlab('Number of machines serviced') +
+  ylab('Service time') +
+  ggtitle("The impact of the number of machines serviced on the total service time") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The plot suggests that the relationship between the number of machines serviced and the service time is approximately linear. Additionally, the correlation between these two variables is positive. Note that this relation holds if the number of machines serviced is in the range [1, 10], but we cannot conclude that this is true for any value of the considered parameter.
+
+
+# Task 2
+
+```{r}
+linear_model <- lm(service_time ~ machines_count, copiers_df)
+summary(linear_model)
+confint(linear_model)
+```
+
+Our problem is to find parameters $\hat{\beta_0}, \hat{\beta_1}$ of the equation $y = \hat{\beta_0} + \hat{\beta_1}x$, such that the expression $RSS = \sum_k (y^{real}_k - (\hat{\beta_0} + \hat{\beta_1}x_k))^2$ is minimized. It is known that the optimal parameters can be calculated using the equations $\hat{\beta_1} = \frac{\sum_k (x_k - \overline{x})(y_k - \overline{y})}{\sum_k (x_k - \overline{x})^2}$ and $\hat{\beta_0} = \overline{y} - \hat{\beta_1} \overline{x}$. Above relations can be showed using some calculus. Additionally, treating $\hat{\beta_0}, \hat{\beta_1}$ as estimators, allow us to derive the formulas for standard errors: $SE(\hat{\beta_0})^2 = \sigma^2[\frac{1}{n} + \frac{\overline{x}^2}{\sum_k (x_k - \overline{x})^2)}]$ and $SE(\hat{\beta_1})^2 = \frac{\sigma^2}{\sum_k (x_k - \overline{x})^2}$, where $\sigma^2 = Var(y - (\hat{\beta_0} + \hat{\beta_1}x))$. In R, linear regression can be performed using the `lm` method. Additionally, it gives us a statistical analysis of the performed regression task to allow us to determine whether our results are statistically significant.
+
+After running the linear regression using the `lm` method, the optimal values of parameters and the statistical analysis were provided. The regression equation is equal to $y = -0.5802 + 15.0352x$. The standard error for the slope is equal $0.4831$. This means that the 95% confidence interval for the slope is approximately equal to $[15.0352 - 2 * (-0.5802), 15.0352 + 2 * (-0.5802)] \approx [14.06, 16.01]$ as this distribution comes from the t-distribution with the 43 degrees of freedom. Additionally, the 95% confidence interval can be computed using the `confint` method to confirm our theoretical calculations.
+
+The null hypothesis $H_0$ being tested states that there is no relationship between the number of machines serviced and the service time i.e. $\hat{\beta_1} = 0$. The alternative hypothesis states that there is some relationship between the parameters being tested i.e. $\hat{\beta_1} \neq 0$. Based on the analysis, we can reject the null hypothesis $H_0$. The t-statistic for the slope is equal to $\frac{15.0352}{0.4831} \approx 31.123$. The p-value for the slope parameter is nearly 0.0. It implies that we can reject the null hypothesis, which states that there is no relationship between the parameters being tested.
+
+Additional analysis of residuals show that there are a few outliers in our dataset. The values of these outliers are far away from the values predicted by our estimator. In particular, the `Min` and `Max` residuals have their absolute values approximately $-22.77$ and $15.40$ respectively, while the median residual's value is equal to about $0.33$.
+
+# Task 3
+
+```{r}
+```
+
+TODO
+
+
+# Task 4
+
+```{r}
+```
+
+TODO
+
+
+# Task 5
+
+```{r}
+```
+
+TODO
+
+
+# Task 6
+
+```{r}
+calculate_test_power <- function(elements_count, error_var, ssx, beta_value, significance_level = 0.05) {
+  beta1_sd <- error_var / ssx
+  t_mean <- beta_value / sqrt(beta1_sd)
+  quantile <- qt(1 - significance_level / 2, df = elements_count - 2)
+  lower_pbb <- pt(-quantile, df = elements_count - 2, ncp = t_mean)
+  upper_pbb <- pt(quantile, df = elements_count - 2, ncp = t_mean)
+  return (1 - upper_pbb + lower_pbb)
+}
+
+calculate_test_power(elements_count = 40, error_var = 120, ssx = 1000, beta_value = 1.0)
+```
+The power of rejecting the null hypothesis, stating that the regression slope is $0$, is equal to approximately $0.8$. It means that assuming that the true value of the slope is equal to 1.0, the probability of rejecting the null hypothesis is equal to $80\%$. It's not surprising as only $40$ samples were used to fit the regression line and the variance of the error is quite high compared to the variance of X variable that is equal to $\frac{1000}{40} = 25$.
+```{r}
+beta_values <- seq(from = -2, to = 2, by = 0.05)
+test_powers <- c()
+for (index in seq_along(beta_values)) {
+  power <- calculate_test_power(elements_count = 40, error_var = 120, ssx = 1000, beta_value = beta_values[index])
+  test_powers[[index]] <- power
+}
+powers_df <- data.frame(beta_value = beta_values, test_power = test_powers)
+ggplot(powers_df) +
+  geom_line(aes(x = beta_value, y = test_power), color="darkblue") +
+  xlab('True slope value') +
+  ylab('Test power') +
+  ggtitle("The power for rejecting the null hypothesis, stating that the regression slope is 0") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The plot shows that the higher is the absolute value of the true slope, the higher is the power for rejecting the null hypothesis. Moreover, the plot is symmetrical around 0, which means that the same probability is equal for the corresponding negative and positive slopes. The power grows quickly when the slope is near 0, but it slows down for higher values. If the absolute value of the slope is at least $2$, the power is nearly equal to 1, so it's practically impossible not to reject the null hypothesis. The power is equal to the significance level of $\alpha = 0.05$ when the true slope is equal to $0$ i.e. the null hypothesis is true.
+
+
+# Task 7
+
+```{r}
+```
+
+TODO
+
+
+# Task 8
+
+```{r}
+```
+
+TODO
