@@ -1,7 +1,7 @@
 ---
-title: "Linear models - Assignments 1"
+title: "Linear models - Assignment 1"
 author: Dawid Wegner
-date: 07/10/2020
+date: 13/10/2020
 output: html_notebook
 ---
 
@@ -29,7 +29,11 @@ transform_vectors_from_standard_norm <- function(vectors, mean_matrix, covarianc
 }
 ```
 
-Recall that it holds: $\Sigma^{Y} = A\Sigma^{X}A^T$. In our case it also holds $\Sigma^{X} = Id$, so the equation reduces to $\Sigma^{Y} = AA^T$, where $\Sigma^{Y}$ is given. Additionally, a $\Sigma^{Y}$ matrix is positive definite in all the considered cases. This means that Cholesky decomposition can be used to find a lower triangular matrix $A$ that satisfies the equation $\Sigma^{Y} = AA^T$. The elements of the matrix $A$ are given by $A_{ii} = \sqrt{\Sigma^{Y}_{ii} - \sum_{j=0}^{i - 1}A_{ij}^2}$ and $A_{ij} = \frac{1}{A_{j, j}}(\Sigma^{Y}_{jj} - \sum_{k=0}^{j -1}\Sigma^{Y}_{ik}\Sigma^{Y}_{jk})$. This is already implemented in R as a $chol$ method. The matrix $B$ can be calculated directly from the expression $B = \mu^{Y} - A\mu^{X}$. In our scenario it holds $\mu^{X} = 0$, so it follows that $B = \mu^{Y}$.
+Recall that it holds: $\Sigma^{Y} = A\Sigma^{X}A^T$. In our case, it also holds $\Sigma^{X} = Id$, so the equation reduces to $\Sigma^{Y} = AA^T$, where $\Sigma^{Y}$ is given. Additionally, a $\Sigma^{Y}$ matrix is positive definite in all of the considered cases. It can be checked using a Sylvester's criterion that states that a symmetric matrix is positive-definite iff all of the leading principal minors are positive.
+
+The problem stated in this form is known as the Cholesky decomposition method. The main idea of this method is to assume that a matrix $A$ is a lower-triangular matrix. If $\Sigma^{Y}$ is positive-definite, then it always exists $A$ with this property. The elements of the matrix $A$ are given by $A_{ii} = \sqrt{\Sigma^{Y}_{ii} - \sum_{j=0}^{i - 1}A_{ij}^2}$ and $A_{ij} = \frac{1}{A_{jj}}(\Sigma^{Y}_{jj} - \sum_{k=0}^{j -1}\Sigma^{Y}_{ik}\Sigma^{Y}_{jk})$. These equations can be derived element by element starting from $A_{11}$ and taking account the fact that $A$ is a diagonal matrix. It can be computed by a simple dynamic programming algorithm using the property that to compute element $A_{ij}$ it suffices to compute all elements $A_{kl}$ for all $k < i \land l < j$.
+
+The Cholesky decomposition is already implemented in R as a $chol$ method and can be used to calculate the matrix $A$. The matrix $B$ can be calculated directly from the expression $B = \mu^{Y} - A\mu^{X}$. In our case, it holds $\mu^{X} = 0$, so it follows that $B = \mu^{Y}$.
 
 ```{r}
 mean_matrix <- matrix(c(4.0, 2.0), nrow=2)
