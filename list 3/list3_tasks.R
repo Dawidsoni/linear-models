@@ -1,29 +1,16 @@
----
-title: "Linear models - Assignment 3"
-author: Dawid Wegner
-date: 31/10/2020
-output: html_notebook
----
-
-```{r}
+# Linear models - List 3
 library(ggplot2)
 library(MASS)
 set.seed(100)
-```
 
 # Task 1
 
-```{r}
 qt(1 - 0.05 / 2, df = 10) ^ 2
 qf(1 - 0.05, df1 = 1, df2 = 10)
-```
-
-The results show that a $0.975$ quantile of the Student's t-distribution and a $0.95$ quantile of the Fisher distribution are equal. More generally, it holds that a $1 - \frac{\alpha}{2}$ quantile of the Student's t-distribution is equal to the $1 - \alpha$ quantile of the Fisher distribution, assuming that the degrees of freedom of the t-distribution is equal to the degrees of freedom in the denominator of the Fisher distribution and that the degrees of freedom in the enumerator is equal to 1. It is line with the theory that states that the statistics $F, T$ are linked by the relationship $F = T^2$ and that both tests are equivalent.
 
 
 # Task 2
 
-```{r}
 perform_f_test <- function (ssm, sse, dfE, significance_level = 0.05) {
   test_df <- data.frame(matrix(nrow = 1, ncol = 7))
   colnames(test_df) <- c("samples_count", "error_std", "f_df2", "f_value", "f_qunatile", "explained_var", "xy_corr")
@@ -38,14 +25,10 @@ perform_f_test <- function (ssm, sse, dfE, significance_level = 0.05) {
 }
 
 round(perform_f_test(ssm = 100, sse = 400, dfE = 20), digits = 3)
-```
-
-The number of samples $n$ of a dataset is equal to $22$ as $dfE = n - 2 = 20$. The unbiased estimator of the error's variance can be calculated using the formula $\frac{1}{n - 2} \sum_k (Y_k - \hat{Y_k})^2 = \frac{SSE}{dfE} = \frac{400}{20}$. Therefore, the error's standard deviation can be estimated as $\sqrt{20} \approx 4.472$. The number of degrees of freedom of the F-statistic is equal to $1$ in the enumerator and $dfE = 20$ in the denominator, while the F-statistic value is equal to $\frac{100}{20} = 5.0$. It implies that the null hypothesis $H_0$ would be rejected when $\alpha = 0.05$ as $F_{0.95} \approx 4.351$, while it wouldn't be rejected with $\alpha = 0.01$ as $F_{0.99} \approx 8.096$. The model explain $0.2$ proportion of the total variation, implying that $corr(X,Y) = \sqrt{0.2} \approx 0.447$.
 
 
 # Task 3
 
-```{r}
 get_linear_model <- function (x_values, y_values) {
   linear_model <- data.frame(matrix(nrow = 1, ncol = 7))
   colnames(linear_model) <- c("beta0", "beta1", "var_of_errors", "t_statistic", "f_statistic", "p_value", "rse_squared")
@@ -110,9 +93,8 @@ plot_data_with_confidence_intervals <- function (
     ggtitle(title) +
     theme(plot.title = element_text(hjust = 0.5))
 }
-```
 
-```{r}
+
 students_df <- read.table('table1_6.csv', col.names = c("id", "gpa", "iq", "gender", "piers_test"))
 iq_linear_model <- get_linear_model(students_df$iq, students_df$gpa)
 round(iq_linear_model, digits = 4)
@@ -127,16 +109,10 @@ plot_data_with_confidence_intervals(
   iq_joint_intervals, iq_linear_model, title = "Prediction intervals of GPA ~ IQ linear model", x_title = "IQ",
   y_title = "GPA"
 )
-```
-
-The analysis shows that there is a dependence between students' IQ and GPA. In more detail, the t-statistic is equal to $T = 7.142$, while the f-statistic is equal to $F = T^2 = 51.0085$. This implies that a p-value is very close to $0$. Additionally, the value of $R^2$ is equal to $0.4016$, implying that $corr(GPA, IQ) \approx 0.6337$. The fitted linear model gives a relation $GPA = -3.5571 + 0.101 * IQ$. In summary, there is enough evidence to state that there is a linear dependence between GPA and IQ variables, but the model's errors can be high as $R^2$ shows that the model explains only about $40.16\%$ of the total variance.
-
-The prediction interval for $IQ = 100$ is equal to $GPA \in [3.7975, 9.2926]$. The plot of prediction intervals shows that 4 out of 78 values are outside their prediction intervals. This is in line with the theory that states that about $5\%$ of samples should be their outside prediction intervals.
 
 
 # Task 4
 
-```{r}
 piers_test_linear_model <- get_linear_model(students_df$piers_test, students_df$gpa)
 round(piers_test_linear_model, digits = 4)
 create_prediction_intervals(
@@ -151,18 +127,10 @@ plot_data_with_confidence_intervals(
   title = "Prediction intervals of GPA ~ Piers-Harris score linear model", x_title = "Piers-Harris score",
   y_title = "GPA"
 )
-```
 
-The experiment proves that there is a dependence between students' results of Piers-Harris test and GPA. Particularly, the t-statistic is equal to $T = 5.6201$ while the f-statistic is equal to $F = T^2 = 31.5852$. It means that a p-value is nearly equal to $0$. Moreover, the value of $R^2$ is equal to $0.2936$, implying that $corr(GPA, TEST) \approx 0.5418$. The linear model equation gives a relation $GPA = 2.2259 + 0.0917 * TEST$. The analysis provides enough evidence to believe that there is a linear dependence between GPA and Piers-Harris test result variables. Similarly to the previous case, the model's errors can be pretty high as the value of $R^2$ means the model explains only about $29.36\%$ of the total variance.
-
-The prediction interval for $TEST = 60$ is equal to $GPA \in [4.7473, 10.7027]$. The prediction intervals plot shows that 3 out of 78 values are outside their prediction intervals. This is a bit less than the expected value that is equal to $0.05 * 78 = 3.9$.
-
-After comparing the linear models of predicting GPA from IQ and predicting GPA from Piers-Harris test results, we can conclude that IQ is a better predictor than Piers-Harris test results. The reason is that in the case of the IQ model, the value of $R^2$ is significantly higher. Additionally, visual comparison suggests that prediction intervals of this model are a bit smaller compared to the Piers-Harris test model.
 
 # Task 5
 
-
-```{r}
 analyse_residuals <- function (x_values, y_values, linear_model, binwidth, min_x_lim, max_x_lim) {
   residuals <- y_values - (linear_model$beta0 + linear_model$beta1 * x_values)
   print(paste0("Sum of residuals: ", round(sum(residuals), digits = 5)))
@@ -191,9 +159,7 @@ analyse_residuals <- function (x_values, y_values, linear_model, binwidth, min_x
     xlab("Residuals") +
     theme(plot.title = element_text(hjust = 0.5)))
 }
-```
 
-```{r}
 copiers_df <- read.table('ch01pr20.csv', col.names = c("service_time", "machines_count"))
 copiers_linear_model <- get_linear_model(copiers_df$machines_count, copiers_df$service_time)
 round(copiers_linear_model, digits = 4)
@@ -201,17 +167,10 @@ analyse_residuals(
   copiers_df$machines_count, copiers_df$service_time, copiers_linear_model, binwidth = 4.0, min_x_lim = -30.0,
   max_x_lim = 30.0
 )
-```
 
-The plot, comparing residuals with machine counts, suggests that residuals don't depend on machine counts. While there are $2$ residuals that have value under $-15$ and there are no residuals with values above $15$, it can be a coincidence as there are only $45$ samples in the dataset. Additionally, it can be observed that these $2$ residuals correspond to samples with high numbers of machines counts. To investigate whether it is a coincidence or not, we would need to have more samples.
-
-From the plot of residuals based on measurement orders, we can summarize that generally there is no dependence between these two variables. The only exception are measurements $18$ and $19$ that are much more deviated from the value of $0$ than other measurements. We can suspect that it's not a coincidence that these measurements were carried out one after another.
-
-The histogram of residuals shows that the distribution of residuals is approximated well by the normal distribution. While this approximation is not perfect, it's good enough to claim that residuals come from the normal distribution as only $45$ are in the dataset.
 
 # Task 6
 
-```{r}
 noisy_copiers_df <- copiers_df
 noisy_copiers_df$service_time[1] <- 2000
 noisy_copiers_linear_model <- get_linear_model(noisy_copiers_df$machines_count, noisy_copiers_df$service_time)
@@ -220,27 +179,16 @@ analyse_residuals(
   noisy_copiers_df$machines_count, noisy_copiers_df$service_time, noisy_copiers_linear_model, binwidth = 50.0,
   min_x_lim = -2000.0, max_x_lim = 2000.0
 )
-```
-
-The experiment shows that one outlier can change the parameters of the fitted linear model drastically. In particular, the fitted line doesn't describe the relation between the variables well. Moreover, the variance of errors increased by over $100$ times. As a result, the t-statistic, f-statistic and $R^2$ decreased drastically. Based on it, we can not reject the null hypothesis $H_0$, stating that there is no dependence between variables.
-
-All of the plots of residuals show that there is one outlier value that breaks the assumptions of our model. These plots could be used to determine that we should remove the outlier value to fit the better model.
 
 
 # Task 7
 
-```{r}
 solutions_df <- read.table('ch03pr15.csv', col.names = c("concentration", "time"))
 solutions_linear_model <- get_linear_model(solutions_df$time, solutions_df$concentration)
 round(solutions_linear_model, digits = 4)
-```
-
-The analysis shows that the linear model describes the dependence between the solution time and the solution concentration well. The value of $beta1$ parameter indicates that there is a negative correlation between these two variables. The variance of errors is equal to $0.225$ that is a pretty low value. Additionally, our model explains about $81.16\%$ of the whole variance as $R^2 = 0.8116$. The high values of the t-statistic and f-statistic allow us to reject the null hypothesis $H_0$.
-
 
 # Task 8
 
-```{r}
 solutions_joint_intervals <- create_prediction_intervals(
   solutions_df$time, solutions_df$concentration, solutions_linear_model, solutions_df$time, significance_level = 0.05
 )
@@ -250,23 +198,15 @@ plot_data_with_confidence_intervals(
   title = "Prediction intervals of solution time ~ solution concetration linear model", x_title = "Solution time",
   y_title = "Solution concentration"
 )
-```
-
-The plot of the fitted model suggests the assumption that residuals don't depend on the explanatory variable is broken. In particular, all residuals are positive for low values and high values of the explanatory variable, while they are negative for middle values. It means that while our model describes the relation well, we can seek for the better model with transformed variables. The correlation between the variables also indicates a strong linear correlation $\sqrt{0.8116} \approx 0.9$ between the variables.
 
 
 # Task 9
 
-```{r}
 boxcox(solutions_df$concentration ~ solutions_df$time)
-```
-
-The maximum likelihood estimation using Box-Cox method indicates that the optimal transformation of the response variable is for $\lambda = 0$. Recall that this transformation is defined as $y^\lambda = \frac{y^\lambda - 1}{\lambda}$. In the case of $\lambda = 0$, it follows that $y^\lambda = log(y)$. It means that we can transform our response variable as $y' = log(y)$ to fit the better model. In particular, this should be the best model from the family of models $\frac{y^\lambda - 1}{\lambda}$.
 
 
 # Task 10
 
-```{r}
 log_solutions_df <- solutions_df
 log_solutions_df$concentration <- log(log_solutions_df$concentration)
 log_solutions_linear_model <- get_linear_model(log_solutions_df$time, log_solutions_df$concentration)
@@ -281,27 +221,18 @@ plot_data_with_confidence_intervals(
   title = "Prediction intervals of solution time ~ log(solution concetration) linear model", x_title = "Solution time",
   y_title = "Log(solution concentration)"
 )
-```
-
-After transforming the variable $y' = log(y)$, the quality of our model increased. It is visible from the table with statistics as all of them were improved after the transformation. In particular, the $R^2$ increased from $0.8116$ to $0.993$, meaning that the variance of our model explains significantly greater proportion of the total variance compared to the standard linear model. Additionally, the plot of the fitted lines suggests that the assumptions of the linear model have been fixed. In particular, residuals don't seem to depend on the explanatory variable. The only controversial point is for $time = 5$, where all residuals are positive. But as the number of samples in the dataset is really low, it can a coincidence.
-
 
 # Task 11
 
-```{r}
 plot_data_with_confidence_intervals(
   log_solutions_joint_intervals, log_solutions_linear_model, y_transform = exp,
   title = "Prediction intervals of solution time ~ log(solution concetration) linear model", x_title = "Solution time",
   y_title = "Solution concentration", curve_margin = 0.3
 )
-```
-
-After transforming back our response variable $y = e^{y'}$, it can be seen that the model fits our data well. The plotted curve is an exponential function that is reflected in the $Y$ axis. One phenomenon that can be observed is that residuals are higher for high values of the response variable. It is a direct result of the transformation $y = e^{y'}$ that we use transform our data.
 
 
 # Task 12
 
-```{r}
 sqrt_solutions_df <- solutions_df
 sqrt_solutions_df$time <- sqrt_solutions_df$time ^ (-0.5)
 sqrt_solutions_linear_model <- get_linear_model(sqrt_solutions_df$time, sqrt_solutions_df$concentration)
@@ -324,9 +255,3 @@ plot_data_with_confidence_intervals(
   title = "Prediction intervals of (solution time)^(-1/2) ~ solution concetration linear model",
   x_title = "Solution time", y_title = "Solution concentration"
 )
-```
-
-The transformation of the explanatory variable $x' = x^{-1/2}$ impacts the quality of the linear model in a good way. The variance of the errors is only a slightly higher compared to the model transforming $y$ as $y' = log(y)$. Similarly, the $R^2$ decreased by only about $1\%$. Additionally, the plot of $x' \sim y$ suggests that our model fulfills the assumptions of the linear model. Lastly, the plot $x \sim y$ shows that the model fits our data well. Comparing to the $y' = log(y)$ model, the errors don't depend on the response variable that can be a desirable property.
-
-From the $3$ designed models, the standard linear model is significantly worse than the other $2$ models. The main difference between the $x' = x^{-1/2}$ and $y' = log(y)$ models is the behaviour of residuals. Thus, if we care more about the approximation quality of the original $x, y$ variables, the $x' = x^{-1/2}$ model can be a better choice as residuals don't depend on the response variable in this case. In contrast, if the accuracy of the transformed variables is more important for us, the $y' = log(y)$ model can be a better choice as the variance of errors is slightly smaller as well as the value of $R^2$ is a bit higher compared to the $x' = x^{-1/2}$ model.
-
