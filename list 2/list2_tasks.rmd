@@ -8,7 +8,7 @@ output: html_notebook
 ```{r}
 library(ggplot2)
 options(warn = -1)
-set.seed(1)
+set.seed(100)
 ```
 
 # Task 1
@@ -23,47 +23,132 @@ ggplot(copiers_df) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-The plot suggests that the relationship between the number of machines serviced and the service time is approximately linear. Additionally, the correlation between these two variables is positive. Note that this relation holds if the number of machines serviced is in the range [1, 10], but we cannot conclude that this is true for any value of the considered parameter.
+The plot suggests that the relationship between the number of machines serviced and the service time is approximately linear. Additionally, the correlation between these two variables is positive. Note that this relation holds if the number of machines serviced is in the range [1, 10], but we cannot conclude that it holds for any value of the considered parameter.
 
 
 # Task 2
 
 ```{r}
-linear_model <- lm(service_time ~ machines_count, copiers_df)
-summary(linear_model)
-confint(linear_model)
+get_linear_model <- function (x_values, y_values) {
+  linear_model <- data.frame(matrix(nrow = 1, ncol = 6))
+  colnames(linear_model) <- c("beta0", "beta1", "beta0_se", "beta1_se", "slope_t_statistic", "slope_p_value")
+  x_mean <- mean(x_values)
+  y_mean <- mean(y_values)
+  beta1 <- sum((x_values - x_mean) * (y_values - y_mean)) / sum((x_values - x_mean) ^ 2)
+  beta0 <- y_mean - beta1 * x_mean
+  errors <-  y_values - (beta0  + beta1 * x_values)
+  errors_var <- sum(errors ^ 2) / (length(errors) - 2)
+  print(errors_var)
+  beta1_se <- sqrt(errors_var / sum((x_values - x_mean) ^ 2))
+  beta0_se <- sqrt(errors_var * (1 / length(x_values) + x_mean ^ 2 / sum((x_values - x_mean) ^ 2)))
+  slope_t_statistic <-  beta1 / beta1_se
+  slope_p_value <- 2 * pt(abs(slope_t_statistic), df = length(x_values) - 2, lower.tail = FALSE)
+  linear_model["beta0"] <- beta0
+  linear_model["beta1"] <- beta1
+  linear_model["beta0_se"] <- beta0_se
+  linear_model["beta1_se"] <- beta1_se
+  linear_model["slope_t_statistic"] <- slope_t_statistic
+  linear_model["slope_p_value"] <- slope_p_value
+  return(linear_model)
+}
+
+round(get_linear_model(copiers_df$machines_count, copiers_df$service_time), digits = 4)
 ```
 
-Our problem is to find parameters $\hat{\beta_0}, \hat{\beta_1}$ of the equation $y = \hat{\beta_0} + \hat{\beta_1}x$, such that the expression $RSS = \sum_k (y^{real}_k - (\hat{\beta_0} + \hat{\beta_1}x_k))^2$ is minimized. It is known that the optimal parameters can be calculated using the equations $\hat{\beta_1} = \frac{\sum_k (x_k - \overline{x})(y_k - \overline{y})}{\sum_k (x_k - \overline{x})^2}$ and $\hat{\beta_0} = \overline{y} - \hat{\beta_1} \overline{x}$. Above relations can be showed using some calculus. Additionally, treating $\hat{\beta_0}, \hat{\beta_1}$ as estimators, allow us to derive the formulas for standard errors: $SE(\hat{\beta_0})^2 = \sigma^2[\frac{1}{n} + \frac{\overline{x}^2}{\sum_k (x_k - \overline{x})^2)}]$ and $SE(\hat{\beta_1})^2 = \frac{\sigma^2}{\sum_k (x_k - \overline{x})^2}$, where $\sigma^2 = Var(y - (\hat{\beta_0} + \hat{\beta_1}x))$. In R, linear regression can be performed using the `lm` method. Additionally, it gives us a statistical analysis of the performed regression task to allow us to determine whether our results are statistically significant.
+Our problem is to find parameters $\hat{\beta_0}, \hat{\beta_1}$ of the equation $y = \hat{\beta_0} + \hat{\beta_1}x$, such that the expression $RSS = \sum_k (y^{real}_k - (\hat{\beta_0} + \hat{\beta_1}x_k))^2$ is minimized. It is known that the optimal parameters can be calculated using the equations $\hat{\beta_1} = \frac{\sum_k (x_k - \overline{x})(y_k - \overline{y})}{\sum_k (x_k - \overline{x})^2}$ and $\hat{\beta_0} = \overline{y} - \hat{\beta_1} \overline{x}$. These relations can be showed using some calculus. Additionally, treating $\hat{\beta_0}, \hat{\beta_1}$ as estimators, allows us to derive the formulas for standard errors: $SE(\hat{\beta_0})^2 = \sigma^2[\frac{1}{n} + \frac{\overline{x}^2}{\sum_k (x_k - \overline{x})^2)}]$ and $SE(\hat{\beta_1})^2 = \frac{\sigma^2}{\sum_k (x_k - \overline{x})^2}$, where $\sigma^2 = Var(y - (\hat{\beta_0} + \hat{\beta_1}x))$.
 
-After running the linear regression using the `lm` method, the optimal values of parameters and the statistical analysis were provided. The regression equation is equal to $y = -0.5802 + 15.0352x$. The standard error for the slope is equal $0.4831$. This means that the 95% confidence interval for the slope is approximately equal to $[15.0352 - 2 * (-0.5802), 15.0352 + 2 * (-0.5802)] \approx [14.06, 16.01]$ as this distribution comes from the t-distribution with the 43 degrees of freedom. Additionally, the 95% confidence interval can be computed using the `confint` method to confirm our theoretical calculations.
+After running the linear regression, the optimal values of parameters and the statistical analysis were provided. The regression equation is equal to $y = -0.5802 + 15.0352x$. The standard error for the slope is equal $0.4776$. This means that the 95% confidence interval for the slope is approximately equal to $[15.0352 - 2 * 0.4776, 15.0352 + 2 * 0.4776] \approx [14.08, 15.99]$ as this distribution comes from the t-distribution with the 43 degrees of freedom.
 
-The null hypothesis $H_0$ being tested states that there is no relationship between the number of machines serviced and the service time i.e. $\hat{\beta_1} = 0$. The alternative hypothesis states that there is some relationship between the parameters being tested i.e. $\hat{\beta_1} \neq 0$. Based on the analysis, we can reject the null hypothesis $H_0$. The t-statistic for the slope is equal to $\frac{15.0352}{0.4831} \approx 31.123$. The p-value for the slope parameter is nearly 0.0. It implies that we can reject the null hypothesis, which states that there is no relationship between the parameters being tested.
-
-Additional analysis of residuals show that there are a few outliers in our dataset. The values of these outliers are far away from the values predicted by our estimator. In particular, the `Min` and `Max` residuals have their absolute values approximately $-22.77$ and $15.40$ respectively, while the median residual's value is equal to about $0.33$.
+The null hypothesis $H_0$ being tested states that there is no relationship between the number of machines serviced and the service time i.e. $\hat{\beta_1} = 0$. The alternative hypothesis states that there is some relationship between the parameters being tested i.e. $\hat{\beta_1} \neq 0$. The t-statistic for the slope is equal to $\frac{15.0352}{0.4776} \approx 31.48$. The p-value for the slope parameter is nearly 0.0. It implies that we can reject the null hypothesis.
 
 # Task 3
 
 ```{r}
+fit_and_estimate_value <- function (x_values, y_values, estimation_x, significance_level = 0.05) {
+  linear_model <- get_linear_model(x_values, y_values)
+  beta0 <- linear_model$beta0
+  beta1 <- linear_model$beta1
+  estimation_y <- beta0 + beta1 * estimation_x
+  values_count <- length(x_values)
+  x_mean <- mean(x_values)
+  errors <- y_values - (beta0 + beta1 * x_values)
+  errors_var <- sum(errors ^ 2) / (length(errors) - 2)
+  ssx <- sum((x_values - x_mean) ^ 2)
+  standard_error <- sqrt(errors_var * (1 / values_count + ((estimation_x - x_mean) ^ 2) / ssx))
+  confidence_interval_length <- qt(1 - significance_level / 2, values_count - 2) * standard_error
+  min_interval <- estimation_y - confidence_interval_length
+  max_interval <- estimation_y + confidence_interval_length
+  return(data.frame(
+    estimation_y=estimation_y, standard_error=standard_error, min_interval=min_interval, max_interval=max_interval
+  ))
+}
+
+round(fit_and_estimate_value(copiers_df$machines_count, copiers_df$service_time, estimation_x = 11.0), digits = 4)
 ```
 
-TODO
+The estimation of the service time, given that the number of machines is equal to $11$, can be calculated directly from the linear regression equation by applying $x = 11$. The considered value is equal to $164.8076$. To derive the $95\%$ confidence interval, it suffices to calculate the standard error of $x = 11$ and find the $0.975$ quantile of t-distribution with $43$ degrees of freedom. After calculating these quantities, one can find that the considered interval is equal to $[158.5478, 171.0673]$.
 
 
 # Task 4
 
 ```{r}
+fit_and_predict_value <- function (x_values, y_values, estimation_x, significance_level = 0.05) {
+  linear_model <- get_linear_model(x_values, y_values)
+  beta0 <- linear_model$beta0
+  beta1 <- linear_model$beta1
+  estimation_y <- beta0 + beta1 * estimation_x
+  values_count <- length(x_values)
+  x_mean <- mean(x_values)
+  errors <- y_values - (beta0 + beta1 * x_values)
+  errors_var <- sum(errors ^ 2) / (length(errors) - 2)
+  ssx <- sum((x_values - x_mean) ^ 2)
+  standard_error <- sqrt(errors_var * (1 + 1 / values_count + ((estimation_x - x_mean) ^ 2) / ssx))
+  confidence_interval_length <- qt(1 - significance_level / 2, values_count - 2) * standard_error
+  min_interval <- estimation_y - confidence_interval_length
+  max_interval <- estimation_y + confidence_interval_length
+  return(data.frame(
+    estimation_y=estimation_y, standard_error=standard_error, min_interval=min_interval, max_interval=max_interval
+  ))
+}
+
+round(fit_and_predict_value(copiers_df$machines_count, copiers_df$service_time, estimation_x = 11.0), digits = 4)
 ```
 
-TODO
+The prediction of the service time is analogous to the estimation of this value. The only difference is that the standard error of the prediction interval is a little bit higher. The reason for this phenomenon is that the prediction interval takes into account the impact of errors. After computing the considered quantities, one can find that the expected value of the service time is equal to $164.8076$, while the $95\%$ confidence interval is equal to $[145.9669, 183.6482]$.
 
 
 # Task 5
 
 ```{r}
+plot_prediction_interval <- function (x_values, y_values, significance_level = 0.05) {
+  linear_model <- get_linear_model(x_values, y_values)
+  beta0 <- linear_model$beta0
+  beta1 <- linear_model$beta1
+  predicted_values <- beta0 + beta1 * x_values
+  values_count <- length(x_values)
+  x_mean <- mean(x_values)
+  errors <- y_values - (beta0 + beta1 * x_values)
+  errors_var <- sum(errors ^ 2) / (length(errors) - 2)
+  ssx <- sum((x_values - x_mean) ^ 2)
+  standard_errors <- sqrt(errors_var * (1 + 1 / values_count + ((x_values - x_mean) ^ 2) / ssx))
+  fisher_constant <- sqrt(2 * qf(1 - significance_level, 2, values_count - 2))
+  confidence_interval_lengths <- fisher_constant * standard_errors
+  min_values <- predicted_values - confidence_interval_lengths
+  max_values <- predicted_values + confidence_interval_lengths
+  data_df <- data.frame(x_value = x_values, min_value = min_values, max_value = max_values)
+  ggplot(data_df) +
+    geom_point(aes(x = x_value, y = min_value), shape = 19, size = 2.2, color = "red") +
+    geom_point(aes(x = x_value, y = max_value), shape = 19, size = 2.2, color = "red") +
+    xlab('Number of machines serviced') +
+    ylab('Service time') +
+    ggtitle("Confidence intervals for individual observations") +
+    theme(plot.title = element_text(hjust = 0.5))
+}
+
+plot_prediction_interval(copiers_df$machines_count, copiers_df$service_time)
 ```
 
-TODO
+The $95\%$ prediction intervals of multiple values can be calculated using the Fisher distribution with the parameters $df_1 = 2$ and $df_2 = n - 2$. The other quantities like the standard errors are computed in the same way as in the task of predicting one value. After applying this theory, the graph of $95\%$ confidence intervals was plotted. The first observation from the plot is that the lengths of the prediction intervals are quite high compared to the lengths of the estimation intervals. The other observation is that the lowest lengths of intervals are achieved near the mean of the number of machines serviced. It is a direct result of the formula for calculating the standard error that takes into account the deviation from the mean of observations.
 
 
 # Task 6
@@ -97,20 +182,64 @@ ggplot(powers_df) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-The plot shows that the higher is the absolute value of the true slope, the higher is the power for rejecting the null hypothesis. Moreover, the plot is symmetrical around 0, which means that the same probability is equal for the corresponding negative and positive slopes. The power grows quickly when the slope is near 0, but it slows down for higher values. If the absolute value of the slope is at least $2$, the power is nearly equal to 1, so it's practically impossible not to reject the null hypothesis. The power is equal to the significance level of $\alpha = 0.05$ when the true slope is equal to $0$ i.e. the null hypothesis is true.
+The plot shows that the higher is the absolute value of the true slope, the higher is the power for rejecting the null hypothesis. Moreover, the plot is symmetrical around $0$, which means that the considered probabilities are equal for the corresponding negative and positive slopes. The power of the test grows quickly when the slope is near $0$, but it slows down for higher values. If the absolute value of the slope is at least $2$, the power of the test is nearly equal to $1.0$, implying that it's practically impossible not to reject the null hypothesis. The power is equal to the significance level of $\alpha = 0.05$ when the true slope is equal to $0$ i.e. the null hypothesis is true.
 
 
 # Task 7
 
 ```{r}
+test_sample_rejection_frequency <- function (
+  x_generator, error_generator, beta, experiments_count = 1000, samples_per_experiment = 200, significance_level = 0.05
+) {
+  x_samples <- x_generator(samples_count = samples_per_experiment)
+  x_mean <- mean(x_samples)
+  rejections <- 0
+  for (i in 1:experiments_count) {
+    error_samples <- error_generator(samples_count = samples_per_experiment)
+    y_samples <- 5 + beta * x_samples + error_samples
+    y_mean <- mean(y_samples)
+    beta1_estimator <- sum((x_samples - x_mean) * (y_samples - y_mean)) / sum((x_samples - x_mean) ^ 2)
+    beta0_estimator <- y_mean - beta1_estimator * x_mean
+    errors <- y_samples - (beta0_estimator + beta1_estimator * x_samples)
+    errors_var <- sum(errors ^ 2) / (length(errors) - 2)
+    standard_error <- sqrt(errors_var / sum((x_samples - x_mean) ^ 2))
+    test_statistic <- beta1_estimator / standard_error
+    is_rejected <- abs(test_statistic) >= qt(1 - significance_level / 2, samples_per_experiment - 2)
+    if (is_rejected) {
+      rejections <- rejections + 1
+    }
+  }
+  return(rejections / experiments_count)
+}
+
+x_generator <- function (samples_count) rnorm(samples_count, mean = 0, sd = 5e-3)
+error_generator1 <- function (samples_count) rnorm(samples_count, mean = 0, sd = 1.0)
+error_generator2 <- function (samples_count) rexp(samples_count, rate = 1.0)
 ```
 
-TODO
+```{r}
+test_sample_rejection_frequency(x_generator, error_generator1, beta = 0)
+test_sample_rejection_frequency(x_generator, error_generator2, beta = 0)
+test_sample_rejection_frequency(x_generator, error_generator1, beta = 1.5)
+test_sample_rejection_frequency(x_generator, error_generator2, beta = 1.5)
+```
 
+The results show that the probability of rejecting the null hypothesis is approximately equal to the level of significance $\alpha = 0.05$ in all of the conducted experiments. In the experiment $a$ this result was quite expected as the null hypothesis is true in this case and the errors come from the normal distribution. The similar result was obtained in the experiment $b$, showing that changing the distribution of errors doesn't change the results drastically. The obtained rejection probability is a bit further from the level of significance compared to the experiment $a$, suggesting that there is some impact caused by changing the distribution of errors.
+
+The results of experiments $c$ and $d$ were less expected from the theoretical point of view as the true slope is set to $1.5$ in these cases. But after analysing it deeper, it is quite obvious that the fitted line should be close to the lines fitted in the previous experiments. The reason is that the variables $X$ are dominated by the errors that have much higher variance. It implies that the enumerator in the standard error equation is quite high, while the denominator is close to $0$. As a result, the standard error is high and the test statistic is low. Taking it into account, the obtained results are expected.
 
 # Task 8
 
 ```{r}
+round(qt(0.975, df = 8), digits = 3)
 ```
 
-TODO
+The middle point of the $95\%$ confidence interval for $\beta_1$ is in the point $\hat{\beta_1} = 3.0$. The deviation of the interval from its middle point can be calculated as $t_c * s(\hat{\beta_1}) \approx 1.0 * 2.306 = 2.306$. It follows that the $95\%$ confidence interval is equal to $[0.6984, 5.3016]$.
+
+```{r}
+round(2 * pt(3.0, df = 8, lower.tail = FALSE), digits = 3)
+```
+
+The t-statistic is equal to $\frac{\hat{\beta_1} - 0.0}{s(\beta_1)} = \frac{3.0}{1.0} = 3.0$. This means that assuming the significance level of $\alpha = 0.05$, we can reject the null hypothesis as the p-value is equal to $0.017$. This gives us a statistical evidence that there is some relation between $X$ and $Y$.
+
+Given the $95\%$ confidence interval when $x = 5$, it's possible to derive the standard error of the estimation. As $t_c * s(\hat{\beta_1}) = 3.0$ and $t_c = 2.306$, it holds $s(\hat{\beta_1}) = \frac{3.0}{2.306} \approx 1.3$. The standard error of the prediction $s_p(\hat{\beta_1})$ can be calculated using the fact that $s_p^2(\hat{\beta_1}) = s^2(\hat{\beta_1}) + s^2$. From this equation it follows that $s_p(\hat{\beta_1}) = \sqrt{1.3 * 1.3 + 4 * 4} \approx 4.2$. As a consequence, the prediction interval is equal to $[13 - 2.306 * 4.2, 13 + 2.306 * 4.2] \approx [3.3148, 22.6852]$.
